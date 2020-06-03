@@ -1,0 +1,20 @@
+[package]
+name = "open_nd"
+version = "0.1.0"
+authors = ["Andrew E <32277829+AndrewDEmerson@users.noreply.github.com>"]
+edition = "2018"
+
+[[bin]]
+name = "avf_decoder"
+path = "src/avf.rs"
+
+[[bin]]
+name = "ciftree_decoder"
+path = "src/ciftree.rs"
+
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+structopt = "0.3.13"
+png = "0.16.3"
