@@ -89,8 +89,8 @@ fn main() {
             record_type_variation: byte_read::read_bytes_le(&data, hr + 0x39, 1) as u8,
             rest: &data[hr + 0x3a..hr + 8 + byte_read::read_bytes_be(&data, hr + 0x04, 4) as usize],
         });
-        println!("{:?}", acts.last().unwrap().rest);
-        println!();
+        //println!("{:?}", acts.last().unwrap().rest);
+        //println!();
         hr += acts.last().unwrap().size as usize + 8;
         if hr >= data.len()-1 {break};
     }
@@ -103,6 +103,8 @@ fn main() {
         if a.record_type == 0x0C{
             //this is a scene change
             println!("The next scene is {}", byte_read::read_bytes_le(a.rest, 0, 2));
+        }else if a.record_type ==0x96{
+            println!("Calling audio file {}.wav", std::str::from_utf8(&a.rest[0..=32]).unwrap().trim_matches('\0'));
         }
     }
 }

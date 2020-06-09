@@ -16,6 +16,10 @@ path = "src/ciftree.rs"
 name = "scene_decoder"
 path = "src/scene.rs"
 
+[[bin]]
+name = "his_decoder"
+path = "src/his.rs"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

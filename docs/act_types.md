@@ -8,8 +8,8 @@
     offset| length | purpose
     --- | --- | ---
     0x00 | 4 | the target scene
-    0x02 | 32 | unknown, might contain length of time before switch
-    0x32 | ? | This value appears to vary between scenes possible this is time in seconds?
+    0x02 | 32 | unknown
+    0x32 | ? | Time in seconds before going to the next scene
 
 * 0x4B_01
 
@@ -21,7 +21,7 @@
 * 0x96_01
 
     
-    Appears to be related to ambient audio
+    This appears to call an audio file to be played
     offset | length | purpose
     --- | --- | ---
     0x00 | 32 | name of the audio file without the extension
