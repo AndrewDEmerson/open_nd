@@ -6,7 +6,7 @@ edition = "2018"
 
 [[bin]]
 name = "avf_decoder"
-path = "src/frontend/avf_frontend.rs"
+path = "src/avf.rs"
 
 [[bin]]
 name = "ciftree_decoder"

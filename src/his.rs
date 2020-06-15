@@ -1,8 +1,22 @@
 use std::io::prelude::*;
 use std::io::Read;
 use std::path::PathBuf;
-#[path = "../lib/byte_reader.rs"]
+#[path = "lib/byte_reader.rs"]
 mod byte_read;
+use structopt::StructOpt;
+
+#[derive(StructOpt)]
+struct Cli {
+    // The path to the file to read
+    input_file: std::path::PathBuf,
+    // The path to the write directory
+    output_dir: std::path::PathBuf,
+}
+
+fn main() {
+    let args = Cli::from_args();
+    his_to_wav(args.input_file, args.output_dir, 8 as u8);
+}
 
 pub fn his_to_wav(input_file: std::path::PathBuf, output_dir: std::path::PathBuf, bit_depth: u8) {
     let mut file = std::fs::File::open(&input_file).unwrap();

@@ -3,10 +3,24 @@ use std::io::prelude::*;
 use std::io::Read;
 use std::num::Wrapping;
 use std::path::PathBuf;
-#[path = "../lib/lzss.rs"]
+#[path = "lib/lzss.rs"]
 mod lzss;
-#[path = "../lib/byte_reader.rs"]
+#[path = "lib/byte_reader.rs"]
 mod byte_read;
+use structopt::StructOpt;
+
+#[derive(StructOpt)]
+struct Cli {
+    // The path to the file to read
+    input_file: std::path::PathBuf,
+    // The path to the write directory
+    output_dir: std::path::PathBuf,
+}
+
+fn main() {
+    let args = Cli::from_args();
+    ext_ciftree(args.input_file, args.output_dir);
+}
 
 pub fn ext_ciftree(input_file: std::path::PathBuf, output_dir: std::path::PathBuf) {
     let mut file = std::fs::File::open(&input_file).unwrap();
