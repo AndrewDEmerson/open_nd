@@ -3,27 +3,13 @@ use std::io::prelude::*;
 use std::io::Read;
 use std::num::Wrapping;
 use std::path::PathBuf;
-use structopt::StructOpt;
-#[path = "lib/lzss.rs"]
+#[path = "../lib/lzss.rs"]
 mod lzss;
-#[path = "lib/byte_reader.rs"]
+#[path = "../lib/byte_reader.rs"]
 mod byte_read;
 
-#[derive(StructOpt)]
-struct Cli {
-    // The path to the file to read
-    #[structopt(short = "i", long = "input")]
-    input: std::path::PathBuf,
-    // The path to the write directory
-    #[structopt(short = "o", long = "output")]
-    output: std::path::PathBuf,
-}
-
-fn main() {
-    let args = Cli::from_args();
-    println!("Reading from: {}", args.input.display());
-
-    let mut file = std::fs::File::open(&args.input).unwrap();
+pub fn ext_ciftree(input_file: std::path::PathBuf, output_dir: std::path::PathBuf) {
+    let mut file = std::fs::File::open(&input_file).unwrap();
     let mut data = Vec::new();
     file.read_to_end(&mut data).unwrap();
 
@@ -115,7 +101,7 @@ fn main() {
             extensions = gen_exts(file, number_entries as usize);
         }
 
-        let out = PathBuf::from(&args.output).join(format!("{}.{}", entries_info[f].filename, extensions[&entries_info[f].filename]));
+        let out = PathBuf::from(&output_dir).join(format!("{}.{}", entries_info[f].filename, extensions[&entries_info[f].filename]));
         let mut out = std::fs::File::create(out).unwrap();
         if extensions[&entries_info[f].filename] == "TGA" {
             let tga = gen_tga(
