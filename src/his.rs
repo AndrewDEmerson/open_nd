@@ -11,11 +11,14 @@ struct Cli {
     input_file: std::path::PathBuf,
     // The path to the write directory
     output_dir: std::path::PathBuf,
+    //The bit depth of the resulting wav file
+    #[structopt(short, long, default_value = "8")]
+    bit_depth: u8,
 }
 
 fn main() {
     let args = Cli::from_args();
-    his_to_wav(args.input_file, args.output_dir, 8 as u8);
+    his_to_wav(args.input_file, args.output_dir, args.bit_depth);
 }
 
 pub fn his_to_wav(input_file: std::path::PathBuf, output_dir: std::path::PathBuf, bit_depth: u8) {
