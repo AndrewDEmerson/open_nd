@@ -3,11 +3,15 @@ use std::io::prelude::*;
 use std::io::Read;
 use std::num::Wrapping;
 use std::path::PathBuf;
-#[path = "lib/lzss.rs"]
-mod lzss;
 #[path = "lib/byte_reader.rs"]
 mod byte_read;
+#[path = "lib/lzss.rs"]
+mod lzss;
 use structopt::StructOpt;
+#[path = "lib/export_png.rs"]
+mod expng;
+#[path = "lib/rgb.rs"]
+mod rgb;
 
 #[derive(StructOpt)]
 struct Cli {
@@ -15,14 +19,16 @@ struct Cli {
     input_file: std::path::PathBuf,
     // The path to the write directory
     output_dir: std::path::PathBuf,
+    #[structopt(short, long, parse(from_occurrences))]
+    png_files: u8,
 }
 
 fn main() {
     let args = Cli::from_args();
-    ext_ciftree(args.input_file, args.output_dir);
+    ext_ciftree(args.input_file, args.output_dir, args.png_files >= 1);
 }
 
-pub fn ext_ciftree(input_file: std::path::PathBuf, output_dir: std::path::PathBuf) {
+pub fn ext_ciftree(input_file: std::path::PathBuf, output_dir: std::path::PathBuf, gen_png: bool) {
     let mut file = std::fs::File::open(&input_file).unwrap();
     let mut data = Vec::new();
     file.read_to_end(&mut data).unwrap();
@@ -115,25 +121,42 @@ pub fn ext_ciftree(input_file: std::path::PathBuf, output_dir: std::path::PathBu
             extensions = gen_exts(file, number_entries as usize);
         }
 
-        let out = PathBuf::from(&output_dir).join(format!("{}.{}", entries_info[f].filename, extensions[&entries_info[f].filename]));
-        let mut out = std::fs::File::create(out).unwrap();
         if extensions[&entries_info[f].filename] == "TGA" {
-            let tga = gen_tga(
-                file,
-                entries_info[f].img_width,
-                entries_info[f].img_height,
-                entries_info[f].img_origin_x,
-                entries_info[f].img_origin_y,
-            );
+            if gen_png {
+                let out =
+                    PathBuf::from(&output_dir).join(format!("{}.png", entries_info[f].filename));
+                let mut stuff = rgb::gen_rgb_array(file);
+                expng::encode_png(
+                    &mut stuff,
+                    out,
+                    entries_info[f].img_width,
+                    entries_info[f].img_height,
+                );
+            } else {
+                let mut out = std::fs::File::create(PathBuf::from(&output_dir).join(format!(
+                    "{}.{}",
+                    entries_info[f].filename, extensions[&entries_info[f].filename]
+                )))
+                .unwrap();
+                let tga = gen_tga(
+                    file,
+                    entries_info[f].img_width,
+                    entries_info[f].img_height,
+                    entries_info[f].img_origin_x,
+                    entries_info[f].img_origin_y,
+                );
+                out.write_all(tga.as_slice()).unwrap();
+            }
 
-            out.write_all(tga.as_slice()).unwrap();
             continue;
-
+        } else {
+            let mut out = std::fs::File::create(PathBuf::from(&output_dir).join(format!(
+                "{}.{}",
+                entries_info[f].filename, extensions[&entries_info[f].filename]
+            )))
+            .unwrap();
+            out.write_all(file).unwrap();
         }
-
-
-        
-        out.write_all(file).unwrap();
     }
 }
 
@@ -143,7 +166,7 @@ fn gen_exts(file: &[u8], size: usize) -> HashMap<String, String> {
     let mut lines = std::str::from_utf8(file).unwrap().lines();
     let mut l: &str;
 
-    for _n in 0..size {
+    for _ in 0..size {
         //this should ideally check for the end of the iterator
         //also should account for CIFLIST not being first in the tree
         loop {
@@ -183,24 +206,24 @@ fn gen_exts(file: &[u8], size: usize) -> HashMap<String, String> {
 
 fn gen_tga(file: &[u8], width: u16, height: u16, ox: u16, oy: u16) -> Vec<u8> {
     let mut a: Vec<u8> = vec![
+        0x00,   //Number of characters in ID field
+        0x00,   //Color Map type (NONE)
+        0x02,   //Image Type Code (Unmapped RGB)
+        0x00,   //5 bytes of color map spec, ignored if color map type is none
         0x00,
         0x00,
-        0x02,
         0x00,
         0x00,
-        0x00,
-        0x00,
-        0x00,
-        (ox & 0x00FF) as u8,
+        (ox & 0x00FF) as u8, //The x origin of the image
         ((ox & 0xFF00) >> 8) as u8,
-        (oy & 0x00FF) as u8,
-        ((oy & 0xFF00) >> 8) as u8, //origin
-        (width & 0x00FF) as u8,
+        (oy & 0x00FF) as u8,    //The y origin of the image
+        ((oy & 0xFF00) >> 8) as u8,
+        (width & 0x00FF) as u8,     //The width of the image
         ((width & 0xFF00) >> 8) as u8,
-        (height & 0x00FF) as u8,
-        ((height & 0xFF00) >> 8) as u8, //width & height
-        0x0F,
-        0x20, //16 bit pixel size; origin is in upper left hand corner
+        (height & 0x00FF) as u8,    //The Height of the image
+        ((height & 0xFF00) >> 8) as u8,
+        0x10,   //The image is 16 bit pixel depth
+        0x20, //origin is in upper left hand corner
     ];
     a.extend_from_slice(file);
     a
