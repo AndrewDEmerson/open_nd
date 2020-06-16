@@ -1,7 +1,5 @@
 use std::io::Read;
 use std::num::Wrapping;
-use std::path::PathBuf;
-use structopt::StructOpt;
 #[path = "lib/byte_reader.rs"]
 mod byte_read;
 #[path = "lib/lzss.rs"]
@@ -10,22 +8,24 @@ mod lzss;
 mod rgb;
 #[path = "lib/export_png.rs"]
 mod xpng;
+use structopt::StructOpt;
 
 #[derive(StructOpt)]
 struct Cli {
     // The path to the file to read
-    #[structopt(short = "i", long = "input")]
-    input: std::path::PathBuf,
+    input_file: std::path::PathBuf,
     // The path to the write directory
-    #[structopt(short = "o", long = "output")]
-    output: std::path::PathBuf,
+    output_dir: std::path::PathBuf,
 }
 
 fn main() {
     let args = Cli::from_args();
-    println!("Reading from: {}", args.input.display());
+    avf_to_png(args.input_file, args.output_dir);
+}
 
-    let mut file = std::fs::File::open(&args.input).unwrap();
+
+pub fn avf_to_png(input_file: std::path::PathBuf, output_dir: std::path::PathBuf){
+    let mut file = std::fs::File::open(&input_file).unwrap();
     let mut data = Vec::new();
     file.read_to_end(&mut data).unwrap();
 
@@ -84,9 +84,9 @@ fn main() {
         }
         let s = &mut lzss::decode_lzss(slice)[..];
         let mut s = rgb::gen_rgb_array(s);
-        let path_o = PathBuf::from(&args.output).join(format!(
+        let path_o = std::path::PathBuf::from(&output_dir).join(format!(
             "{}_{}.png",
-            std::path::Path::new(&args.input)
+            std::path::Path::new(&input_file)
                 .file_stem()
                 .unwrap()
                 .to_str()
