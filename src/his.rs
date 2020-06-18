@@ -48,23 +48,38 @@ pub fn his_to_wav(input_file: std::path::PathBuf, output_dir: std::path::PathBuf
     let mut head;
     let dat_start: usize;
     if String::from(std::str::from_utf8(&data[0..=3]).unwrap()) == "HIS\0" {
-        //File type used in games 3 and later
-        head = Header {
-            chunk_id: String::from("RIFF"),
-            file_size: byte_read::read_bytes_le(&data, 0x18, 4) as u32 + 34,
-            format_id: String::from("WAVE"),
-            subchunk1_id: String::from("fmt "),
-            subchunk1_size: 16,
-            audio_format: byte_read::read_bytes_le(&data, 0x08, 2) as u16,
-            num_channels: byte_read::read_bytes_le(&data, 0x0A, 2) as u16,
-            sample_rate: byte_read::read_bytes_le(&data, 0x0C, 4) as u32,
-            byte_rate: byte_read::read_bytes_le(&data, 0x10, 4) as u32,
-            block_align: byte_read::read_bytes_le(&data, 0x14, 2) as u16,
-            bits_per_sample: byte_read::read_bytes_le(&data, 0x16, 2) as u16,
-            subchunk2_id: String::from("data"),
-            subchunk2_size: byte_read::read_bytes_le(&data, 0x18, 4) as u32,
-        };
-        dat_start = 0x1C;
+        if data[0x1E] == 0x4F{ //This checks for the 'O' in the OggS identifier
+            //ogg vorbis file used in newer games
+            let out = PathBuf::from(&output_dir).join(format!(
+                "{}.ogg",
+                std::path::Path::new(&input_file)
+                    .file_stem()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+            ));
+            let mut out = std::fs::File::create(out).unwrap();
+            out.write_all(&data[0x1E..]).unwrap();
+            return;
+        } else {
+            //File type used in games 3 and later
+            head = Header {
+                chunk_id: String::from("RIFF"),
+                file_size: byte_read::read_bytes_le(&data, 0x18, 4) as u32 + 34,
+                format_id: String::from("WAVE"),
+                subchunk1_id: String::from("fmt "),
+                subchunk1_size: 16,
+                audio_format: byte_read::read_bytes_le(&data, 0x08, 2) as u16,
+                num_channels: byte_read::read_bytes_le(&data, 0x0A, 2) as u16,
+                sample_rate: byte_read::read_bytes_le(&data, 0x0C, 4) as u32,
+                byte_rate: byte_read::read_bytes_le(&data, 0x10, 4) as u32,
+                block_align: byte_read::read_bytes_le(&data, 0x14, 2) as u16,
+                bits_per_sample: byte_read::read_bytes_le(&data, 0x16, 2) as u16,
+                subchunk2_id: String::from("data"),
+                subchunk2_size: byte_read::read_bytes_le(&data, 0x18, 4) as u32,
+            };
+            dat_start = 0x1C;
+        }
     } else if String::from(std::str::from_utf8(&data[0..0x16]).unwrap())
         == "Her Interactive Sound\x1A"
     {
