@@ -24,7 +24,7 @@ fn main() {
 }
 
 
-pub fn avf_to_png(input_file: std::path::PathBuf, output_dir: std::path::PathBuf){
+pub fn avf_to_png(input_file: std::path::PathBuf, mut output_dir: std::path::PathBuf){
     let mut file = std::fs::File::open(&input_file).unwrap();
     let mut data = Vec::new();
     file.read_to_end(&mut data).unwrap();
@@ -47,7 +47,7 @@ pub fn avf_to_png(input_file: std::path::PathBuf, output_dir: std::path::PathBuf
     let number_frames: u16 = byte_read::read_bytes_le(&data, 0x15, 2) as u16;
     let frame_width: u16 = byte_read::read_bytes_le(&data, 0x17, 2) as u16;
     let frame_height: u16 = byte_read::read_bytes_le(&data, 0x19, 2) as u16;
-    println!("The number of entries in the frame index is {}\nThe frame width in pixels is {}\nthe frame height in pixels is {}", number_frames, frame_width,frame_height);
+    //println!("The number of entries in the frame index is {}\nThe frame width in pixels is {}\nthe frame height in pixels is {}", number_frames, frame_width,frame_height);
 
     struct FrameInfo {
         frame_number: u16,
@@ -71,6 +71,11 @@ pub fn avf_to_png(input_file: std::path::PathBuf, output_dir: std::path::PathBuf
         hr += 19; //increase our refrence address to the start of the next frame index
     }
 
+    if number_frames > 1 {
+        output_dir.push(input_file.file_stem().unwrap().to_str().unwrap());
+        std::fs::create_dir_all(&output_dir).unwrap();
+    }
+
     for f in 0..number_frames {
         //decode the data for the frame
         //let f = 10; // the frame to render
@@ -83,6 +88,10 @@ pub fn avf_to_png(input_file: std::path::PathBuf, output_dir: std::path::PathBuf
             slice[n] = (Wrapping(slice[n] as u8) - Wrapping((n % 256) as u8)).0;
         }
         let s = &mut lzss::decode_lzss(slice)[..];
+        if s.len() == 0{
+            eprintln!("Frame from file {:?} contains zero data, Cannot write frame", input_file);
+            continue;
+        }
         let mut s = rgb::gen_rgb_array(s);
         let path_o = std::path::PathBuf::from(&output_dir).join(format!(
             "{}_{}.png",
