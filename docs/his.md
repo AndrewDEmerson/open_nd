@@ -42,6 +42,15 @@ The second version starts with the text:
 | 0x18 | 4 | sound data size |
 | 0x1C | * | sound data |
 
+## Type 3 (OGGS) Header 
+| offset | length | purpose | 
+| --- | --- | --- |
+| 0x00 | 4 | "HIS\0" |
+| 0x04 | 26 | Unknown |
+| 0x1E | ? | appears to be a complete Oggs Vorbis file |
+
+
+
 ## [Standard WAV file format](http://soundfile.sapp.org/doc/WaveFormat/)
 
 | offset | length | name | description | 
