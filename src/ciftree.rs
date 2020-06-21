@@ -85,7 +85,33 @@ pub fn ext_ciftree(
     //Contains the extensions for each of the files in the CIFTREE, retrivable with the filename
     let mut extensions: HashMap<String, String> = HashMap::with_capacity(number_entries as usize);
 
-    if game_number == 2 {
+    //Generate index vector for game 1
+    if game_number == 1 {
+        entry_size = 38;
+        filename_size = 9;
+        for e in 0..number_entries {
+            let index = 0x820 + (entry_size * e as usize);
+            let entry = &mut data[index..(index + entry_size)];
+            entries_info.push(Entry {
+                filename: String::from(
+                    std::str::from_utf8(&entry[0..filename_size])
+                        .unwrap()
+                        .trim_matches('\0'),
+                ),
+                entry_num: byte_read::read_bytes_le(&entry, 0x09, 2) as u16,
+                img_origin_x: 0 as u16,
+                img_origin_y: 0 as u16,
+                img_width: byte_read::read_bytes_le(&entry, 0x0B, 2) as u16,
+                img_height: byte_read::read_bytes_le(&entry, 0x0F, 2) as u16,
+                data_offset: byte_read::read_bytes_le(&entry, 0x13, 4) as u32,
+                file_size_decoded: byte_read::read_bytes_le(&entry, 0x17, 4) as u32,
+                file_size_encoded: byte_read::read_bytes_le(&entry, 0x1F, 4) as u32,
+                file_type: byte_read::read_bytes_le(&entry, 0x23, 1) as u8,
+                ..Default::default()
+            });
+        }
+    //Generate index vector for game 2
+    }else if game_number == 2 {
         entry_size = 70;
         filename_size = 9;
         for e in 0..number_entries {
@@ -134,8 +160,8 @@ pub fn ext_ciftree(
                 ..Default::default()
             });
         }
-    //Generate index vector for games 6 to 9
-    } else if (6..=9).contains(&game_number) {
+    //Generate index vector for games 6 to 10+?
+    } else if (6..=10).contains(&game_number) {
         entry_size = 94;
         filename_size = 33;
         for e in 0..number_entries {
