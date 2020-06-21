@@ -84,7 +84,6 @@ pub fn his_to_wav(input_file: std::path::PathBuf, output_dir: std::path::PathBuf
         == "Her Interactive Sound\x1A"
     {
         //File type used in games 1 and 2
-        println!("Old file type! {:?}", input_file);
         head = Header {
             chunk_id: String::from("RIFF"),
             file_size: byte_read::read_bytes_le(&data, 0x1C, 4) as u32 + 34,

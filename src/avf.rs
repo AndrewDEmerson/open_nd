@@ -38,11 +38,12 @@ pub fn avf_to_png(input_file: std::path::PathBuf, mut output_dir: std::path::Pat
      * height of each frame in pixels should be 254
      */
 
-    let mut s = String::new();
-    for i in 0..0x0F {
-        s.push(data[i] as char);
+    //STFD has AVF files that are not actually images
+    if data.len() <= 15 || String::from(std::str::from_utf8(&data[0..0x0F]).unwrap()) != "AVF WayneSikes\0"
+    {
+        eprintln!("Incorrect Header for file {:?}", input_file);
+        return;
     }
-    assert_eq!(s, "AVF WayneSikes\0", "Header incorrect for AVF file");
 
     let number_frames: u16 = byte_read::read_bytes_le(&data, 0x15, 2) as u16;
     let frame_width: u16 = byte_read::read_bytes_le(&data, 0x17, 2) as u16;

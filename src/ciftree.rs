@@ -85,8 +85,32 @@ pub fn ext_ciftree(
     //Contains the extensions for each of the files in the CIFTREE, retrivable with the filename
     let mut extensions: HashMap<String, String> = HashMap::with_capacity(number_entries as usize);
 
-    //Generate index vector for games 3 to 4
-    if (3..=4).contains(&game_number) {
+    if game_number == 2 {
+        entry_size = 70;
+        filename_size = 9;
+        for e in 0..number_entries {
+            let index = 0x820 + (entry_size * e as usize);
+            let entry = &mut data[index..(index + entry_size)];
+            entries_info.push(Entry {
+                filename: String::from(
+                    std::str::from_utf8(&entry[0..filename_size])
+                        .unwrap()
+                        .trim_matches('\0'),
+                ),
+                entry_num: byte_read::read_bytes_le(&entry, 0x09, 2) as u16,
+                img_origin_x: byte_read::read_bytes_le(&entry, 0x13, 2) as u16,
+                img_origin_y: byte_read::read_bytes_le(&entry, 0x17, 2) as u16,
+                img_width: byte_read::read_bytes_le(&entry, 0x2B, 2) as u16,
+                img_height: byte_read::read_bytes_le(&entry, 0x2F, 2) as u16,
+                data_offset: byte_read::read_bytes_le(&entry, 0x33, 4) as u32,
+                file_size_decoded: byte_read::read_bytes_le(&entry, 0x37, 4) as u32,
+                file_size_encoded: byte_read::read_bytes_le(&entry, 0x3F, 4) as u32,
+                file_type: byte_read::read_bytes_le(&entry, 0x43, 1) as u8,
+                ..Default::default()
+            });
+        }
+    //Generate index vector for games 3 to 5
+    } else if (3..=5).contains(&game_number) {
         entry_size = 94;
         filename_size = 33;
         for e in 0..number_entries {
@@ -110,7 +134,8 @@ pub fn ext_ciftree(
                 ..Default::default()
             });
         }
-    } else if (5..=10).contains(&game_number) {
+    //Generate index vector for games 6 to 9
+    } else if (6..=9).contains(&game_number) {
         entry_size = 94;
         filename_size = 33;
         for e in 0..number_entries {
@@ -136,6 +161,8 @@ pub fn ext_ciftree(
         }
     }
 
+    //Check for a file called CIFLIST, this contains a log of all the files with their proper extension
+    //If their is no CIFLIST, then the files can still be sorted as image or data by their index
     let mut ciflist_exists = false;
     for f in 0..number_entries as usize {
         if entries_info[f].filename == "CIFLIST" {
@@ -153,6 +180,7 @@ pub fn ext_ciftree(
         }
     }
     if !ciflist_exists {eprintln!("Ciftree does not contain a CIFLIST.txt, falling back on index file identifier")}
+
     for f in 0..number_entries as usize {
         //decode the data for the entry
         let slice = &mut data[(entries_info[f as usize].data_offset as usize)
@@ -166,6 +194,7 @@ pub fn ext_ciftree(
         if ciflist_exists {
             if extensions[&entries_info[f].filename] == "TGA" {
                 if gen_png {
+                    //Write all images as png format, instead of the original TGA format
                     let out = PathBuf::from(&output_dir)
                         .join(format!("{}.png", entries_info[f].filename));
                     let mut stuff = rgb::gen_rgb_array(file);
@@ -190,7 +219,6 @@ pub fn ext_ciftree(
                     );
                     out.write_all(tga.as_slice()).unwrap();
                 }
-
                 continue;
             } else {
                 let mut out = std::fs::File::create(PathBuf::from(&output_dir).join(format!(
