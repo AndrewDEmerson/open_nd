@@ -37,11 +37,22 @@ After building the executables are created:
 * his_decoder
 * scene_decoder
 
+### extractor
+    Auto extracts all of data without using command line arguments.
+    To use create a folder called "resources" in the same directory as the extractor program.
+    Create a sub-folder(s) with the game abbreviation(s) as its name inside the resources folder.
+    place all of the files you want extracted into this folder (or any sub-folder in the games folder)
+    run the extractor program; it will create a folder called "extracted_data" with the extracted files.
+
 ### avf_decoder
-Converts an .avf file into a png/ series of pngs that can be viewed.
+    Converts an .avf file into a series of png frames that can be viewed.
 ### ciftree_decoder
-Extracts all of the files out of the CIFTREE file.
+    Extracts all of the files out of the CIFTREE file.
 ### his_decoder
-Converts a .his audio file into a standard .wav file.
+    Converts a .his audio file into a standard .wav or ogg file.
 ### scene_decoder
-Interprets data from a scene file, this is still a heavy WIP. 
+    Interprets data from a scene file, this is still a heavy WIP. 
+
+# More info
+The documentation written by Faye on the various file formats used in the games was very helpfull in the writing of this program.
+[Faye's own extraction programs and documentation are available here](https://gitlab.com/ShimmerFairy/oldhertools/-/tree/master)

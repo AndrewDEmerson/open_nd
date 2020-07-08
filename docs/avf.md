@@ -20,8 +20,9 @@ The header contains the pixel dimensions of the resultant image/video as well as
 | 0x15   | 2      | Number of entries in file index |
 | 0x17   | 2      | Frame width in pixels           |
 | 0x19   | 2      | frame height in pixels          |
-
-followed by 6 bytes of unknown data
+| 0x1B   | 1      | Constant 0x10, possibly bit depth? |
+| 0x1C   | 1-4?   | appears to designate a compression used 0x42 is no compression?, 0x64 & 0xC8 is also used |
+| 0x20   | 1      | Constant 0x02 |
 
 ## Frame Index
 
@@ -32,7 +33,9 @@ the frame index is a set of data entries, one for each frame in the file (therfo
 | 0x00   | 2      | Zero indexed frame number               |
 | 0x02   | 4      | offset into file where the image starts |
 | 0x06   | 4      | The length in bytes of the image data   |
-| 0x0A   | 9      | data of unknow purpose                  |
+| 0x0A   | 4      | decompressed image size (may be width*height*2 but not always) |
+| 0x0E   | 1      | 0x00 when decomp image size=W*H*2; else it seems to either be 0x01 or more commonly 0x02 |
+| 0x0F   | 4      | Unknown; almost always zeros, but can also be 0xFF | 
 
 ## Frame Data
 

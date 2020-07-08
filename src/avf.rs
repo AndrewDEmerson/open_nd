@@ -25,6 +25,8 @@ fn main() {
 
 
 pub fn avf_to_png(input_file: std::path::PathBuf, mut output_dir: std::path::PathBuf){
+    println!();
+    println!("{:?}",input_file);
     let mut file = std::fs::File::open(&input_file).unwrap();
     let mut data = Vec::new();
     file.read_to_end(&mut data).unwrap();
@@ -50,10 +52,16 @@ pub fn avf_to_png(input_file: std::path::PathBuf, mut output_dir: std::path::Pat
     let frame_height: u16 = byte_read::read_bytes_le(&data, 0x19, 2) as u16;
     //println!("The number of entries in the frame index is {}\nThe frame width in pixels is {}\nthe frame height in pixels is {}", number_frames, frame_width,frame_height);
 
+    if data[0x1C] != 0x42 {
+        println!("This file may use compression and will probably be corrupted");
+    }
     struct FrameInfo {
         frame_number: u16,
         frame_offset: u32,
         frame_size: u32,
+        num_pixels: u32,
+        frame_type: u8,
+        tail_data: u32,
     }
 
     /*
@@ -63,12 +71,19 @@ pub fn avf_to_png(input_file: std::path::PathBuf, mut output_dir: std::path::Pat
      */
     let mut hr = 0x21; //a refrence to a hex value to read from that point, initially set to the end of the header
     let mut frames_info = Vec::new();
-    for _n in 0..number_frames {
+    for n in 0..number_frames {
         frames_info.push(FrameInfo {
             frame_number: byte_read::read_bytes_le(&data, hr + 0x00, 2) as u16,
             frame_offset: byte_read::read_bytes_le(&data, hr + 0x02, 4) as u32,
             frame_size: byte_read::read_bytes_le(&data, hr + 0x06, 4) as u32,
+            num_pixels: byte_read::read_bytes_le(&data, hr + 0x0A, 4) as u32,
+            frame_type: byte_read::read_bytes_le(&data, hr + 0x0E, 1) as u8,
+            tail_data: byte_read::read_bytes_le(&data, hr + 0x0F, 4) as u32,
         });
+        if frames_info.last().unwrap().frame_type != 0{
+            println!("Compression seemes to be used on frame {}", n);
+            //println!("{:?}", &data[hr+0x0A..hr+0x13]);
+        }
         hr += 19; //increase our refrence address to the start of the next frame index
     }
 
@@ -79,8 +94,6 @@ pub fn avf_to_png(input_file: std::path::PathBuf, mut output_dir: std::path::Pat
 
     for f in 0..number_frames {
         //decode the data for the frame
-        //let f = 10; // the frame to render
-
         let slice = &mut data[(frames_info[f as usize].frame_offset as usize)
             ..frames_info[f as usize].frame_offset as usize
                 + frames_info[f as usize].frame_size as usize];
