@@ -66,11 +66,11 @@ pub fn png_to_avf(input_file: std::path::PathBuf, output_dir: std::path::PathBuf
     }
 
     let mut head = "AVF WayneSikes\0".as_bytes().to_vec();
-    head.append(&mut vec![0; 6]); // Six bytes of unknown data
+    head.append(&mut vec![0, 0x02, 0, 0, 0, 0]); // Six bytes of unknown data
     head.append(&mut Vec::from((frame_paths.len() as u16).to_le_bytes()));
     head.append(&mut Vec::from((frames[0].width).to_le_bytes()));
     head.append(&mut Vec::from((frames[0].height).to_le_bytes()));
-    head.append(&mut vec![0; 6]); // Six bytes of unknown data
+    head.append(&mut vec![0x10, 0x42, 0, 0, 0, 0x02]);
 
     // Write the frame indexs
     let mut data_dist: u32 = 0;
@@ -81,7 +81,8 @@ pub fn png_to_avf(input_file: std::path::PathBuf, output_dir: std::path::PathBuf
             (head.len() as u32 + index_dist + data_dist).to_le_bytes(),
         )); // Offset of data into file in bytes
         head.append(&mut Vec::from((frames[i].data.len() as u32).to_le_bytes())); // Length of image data in bytes
-        head.append(&mut vec![0; 9]); // Nine bytes of unknown data
+        head.append(&mut Vec::from((frames[i].width as u32 * frames[i].height as u32 * 2).to_le_bytes())); // Decomp image size (assuming no compression)
+        head.append(&mut vec![0; 5]); // Nine bytes of unknown data
         data_dist += frames[i].data.len() as u32;
     }
     for i in 0..frame_paths.len() {
