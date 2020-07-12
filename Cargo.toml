@@ -20,6 +20,10 @@ path = "src/scene.rs"
 name = "his_decoder"
 path = "src/his.rs"
 
+[[bin]]
+name = "avf_encoder"
+path = "src/avf_encoder.rs"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
