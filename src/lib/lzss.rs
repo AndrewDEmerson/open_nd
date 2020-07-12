@@ -1,5 +1,3 @@
-use std::io::prelude::*;
-
 pub fn decode_lzss(data: &mut [u8]) -> Vec<u8> {
     let mut output: Vec<u8> = Vec::new();
     let mut buffer: [u8; 4096] = [0x0; 4096];
@@ -13,12 +11,18 @@ pub fn decode_lzss(data: &mut [u8]) -> Vec<u8> {
         index += 1;
         for _ in 0..8 {
             if (flags & 1) != 0 {
+                if index >= data.len(){
+                    return output;
+                }
                 output.push(data[index]);
                 buffer[buf_write_index as usize] = data[index];
                 buf_write_index += 1;
                 buf_write_index %= 4096;
                 index += 1;
             } else {
+                if index + 1 >= data.len(){
+                    return output;
+                }
                 buf_read_index = data[index] as u16;
                 index += 1;
                 buf_read_index |= ((data[index] & 0xF0) as u16) << 4;
