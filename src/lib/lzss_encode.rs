@@ -24,12 +24,6 @@ pub fn encode_lzss(data: &mut [u8]) -> Vec<u8> {
     // Read index it the byte that the program in now on to encode from the input file
     let mut read_index = 0;
 
-    /*// Read in the file to be incoded, for testing this is hardcoded, but when working should accept an argument
-    let input_file = std::path::PathBuf::from(&String::from("text.txt"));
-    let mut file = std::fs::File::open(&input_file).unwrap();
-    let mut data = Vec::new();
-    file.read_to_end(&mut data).unwrap();*/
-
     loop {
         // Take a slice of the input file, starting at the index, and of length max size or E.O.F.
         let read_buffer;

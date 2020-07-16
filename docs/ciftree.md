@@ -21,7 +21,48 @@ File starts with string:
 
 The file index contains information for each file in the tree. the length of content of this index differs between games
 
-### For Games 3->4->?
+### For Game 1
+
+| Offset | length | Data file | Plain file |
+|---|---|---|---|
+| 0x00 | 9 | Null padded file name | null padded file name |
+| 0x09 | 2 | Entry Number | Entry Number |
+| 0x0B | 2 | Zeros | Width of image |
+| 0x0D | 2 | Zeros | Unknown |
+| 0x0F | 2 | Zeros | Height of image |
+| 0x11 | 1 | Unknown | Unknown |
+| 0x12 | 1 | 0x02 | 0x02 |
+| 0x13 | 4 | Offset into file | Offset into file |
+| 0x17 | 4 | Size of data decompressed | Size of data decompressed |
+| 0x1B | 4 | Unknown | Unknown |
+| 0x1F | 4 | Size of data compressed | Size of data compressed |
+| 0x23 | 1 | file type (0x03) | File type (0x02) |
+| 0x24 | 2 | Unknown | Unknown |
+
+### For Game 2
+
+| Offset | length | Data file | Plain file |
+|---|---|---|---|
+| 0x00 | 9 | Null padded file name | null padded file name |
+| 0x09 | 2 | Entry Number | Entry Number |
+| 0x0B | 8 | Unknown | Unknown |
+| 0x13 | 2 | Zeros | TGA x-origin of lower left |
+| 0x15 | 2 | Zeros | Unknown |
+| 0x17 | 2 | Zeros | TGA y-origin of lower left |
+| 0x19 | 18 | Zeros | Unknown |
+| 0x2B | 2 | Zeros | Width of image |
+| 0x2D | 2 | Zeros | Unknown |
+| 0x2F | 2 | Zeros | Height of image |
+| 0x31 | 1 | 0x10 | 0x10 |
+| 0x32 | 1 | 0x02 | 0x02 |
+| 0x33 | 4 | Offset into file | Offset into file |
+| 0x37 | 4 | Size of data decompressed | Size of data decompressed |
+| 0x3B | 4 | Unknown | Unknown |
+| 0x3F | 4 | Size of data compressed | Size of data compressed |
+| 0x43 | 1 | file type (0x03) | File type (0x02) |
+| 0x44 | 2 | Unknown | Unknown |
+
+### For Games 3 -> 5
 
 | Offset | length | Data file | Plain file |
 |---|---|---|---|
@@ -40,9 +81,24 @@ The file index contains information for each file in the tree. the length of con
 | 0x4B | 4 | Offset into file | Offset into file |
 | 0x4F | 4 | Size of data decompressed | Size of data decompressed |
 | 0x53 | 4 | Unknown | Unknown |
-| 0x57 | 4 | Sixe of data compressed | Size of data compressed |
+| 0x57 | 4 | Size of data compressed | Size of data compressed |
 | 0x5B | 1 | file type (0x03) | File type (0x02) |
 | 0x5C | 2 | Unknown | Unknown |
+
+### For Games 6 -> 10+
+| Offset | length | Data file | Plain file |
+|---|---|---|---|
+| 0x00 | 33 | Null padded file name | null padded file name |
+| 0x21 | 2 | Entry Number | Entry Number |
+| 0x23 | 4 | Offset into file | Offset into file |
+| 0x31 | 2 | Zeros | TGA x-origin of lower left |
+| 0x35 | 2 | Zeros | TGA y-origin of lower left | 
+| 0x49 | 2 | Zeros | Width of image |
+| 0x4D | 2 | Zeros | Height of image |
+| 0x51 | 4 | Size of data decompressed | Size of data decompressed |
+| 0x55 | 4 | Unknown | Unknown |
+| 0x59 | 4 | Size of data compressed | Size of data compressed |
+| 0x5D | 1 | file type (0x03) | File type (0x02) |
 
 ## File data
 

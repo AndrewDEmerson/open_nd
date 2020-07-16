@@ -21,14 +21,26 @@ struct Cli {
     output_dir: std::path::PathBuf,
     #[structopt(short, long, parse(from_occurrences))]
     png_files: u8,
+    #[structopt(short, long)]
+    game_number: u8,
 }
 
 fn main() {
     let args = Cli::from_args();
-    ext_ciftree(args.input_file, args.output_dir, args.png_files >= 1);
+    ext_ciftree(
+        args.input_file,
+        args.output_dir,
+        args.game_number,
+        args.png_files >= 1,
+    );
 }
 
-pub fn ext_ciftree(input_file: std::path::PathBuf, output_dir: std::path::PathBuf, gen_png: bool) {
+pub fn ext_ciftree(
+    input_file: std::path::PathBuf,
+    output_dir: std::path::PathBuf,
+    game_number: u8,
+    gen_png: bool,
+) {
     let mut file = std::fs::File::open(&input_file).unwrap();
     let mut data = Vec::new();
     file.read_to_end(&mut data).unwrap();
@@ -73,10 +85,58 @@ pub fn ext_ciftree(input_file: std::path::PathBuf, output_dir: std::path::PathBu
     //Contains the extensions for each of the files in the CIFTREE, retrivable with the filename
     let mut extensions: HashMap<String, String> = HashMap::with_capacity(number_entries as usize);
 
-    let game_number = 4;
-
-    //Generate index vector for games 3 to 4
-    if (3..=4).contains(&game_number) {
+    //Generate index vector for game 1
+    if game_number == 1 {
+        entry_size = 38;
+        filename_size = 9;
+        for e in 0..number_entries {
+            let index = 0x820 + (entry_size * e as usize);
+            let entry = &mut data[index..(index + entry_size)];
+            entries_info.push(Entry {
+                filename: String::from(
+                    std::str::from_utf8(&entry[0..filename_size])
+                        .unwrap()
+                        .trim_matches('\0'),
+                ),
+                entry_num: byte_read::read_bytes_le(&entry, 0x09, 2) as u16,
+                img_origin_x: 0 as u16,
+                img_origin_y: 0 as u16,
+                img_width: byte_read::read_bytes_le(&entry, 0x0B, 2) as u16,
+                img_height: byte_read::read_bytes_le(&entry, 0x0F, 2) as u16,
+                data_offset: byte_read::read_bytes_le(&entry, 0x13, 4) as u32,
+                file_size_decoded: byte_read::read_bytes_le(&entry, 0x17, 4) as u32,
+                file_size_encoded: byte_read::read_bytes_le(&entry, 0x1F, 4) as u32,
+                file_type: byte_read::read_bytes_le(&entry, 0x23, 1) as u8,
+                ..Default::default()
+            });
+        }
+    //Generate index vector for game 2
+    }else if game_number == 2 {
+        entry_size = 70;
+        filename_size = 9;
+        for e in 0..number_entries {
+            let index = 0x820 + (entry_size * e as usize);
+            let entry = &mut data[index..(index + entry_size)];
+            entries_info.push(Entry {
+                filename: String::from(
+                    std::str::from_utf8(&entry[0..filename_size])
+                        .unwrap()
+                        .trim_matches('\0'),
+                ),
+                entry_num: byte_read::read_bytes_le(&entry, 0x09, 2) as u16,
+                img_origin_x: byte_read::read_bytes_le(&entry, 0x13, 2) as u16,
+                img_origin_y: byte_read::read_bytes_le(&entry, 0x17, 2) as u16,
+                img_width: byte_read::read_bytes_le(&entry, 0x2B, 2) as u16,
+                img_height: byte_read::read_bytes_le(&entry, 0x2F, 2) as u16,
+                data_offset: byte_read::read_bytes_le(&entry, 0x33, 4) as u32,
+                file_size_decoded: byte_read::read_bytes_le(&entry, 0x37, 4) as u32,
+                file_size_encoded: byte_read::read_bytes_le(&entry, 0x3F, 4) as u32,
+                file_type: byte_read::read_bytes_le(&entry, 0x43, 1) as u8,
+                ..Default::default()
+            });
+        }
+    //Generate index vector for games 3 to 5
+    } else if (3..=5).contains(&game_number) {
         entry_size = 94;
         filename_size = 33;
         for e in 0..number_entries {
@@ -100,7 +160,52 @@ pub fn ext_ciftree(input_file: std::path::PathBuf, output_dir: std::path::PathBu
                 ..Default::default()
             });
         }
+    //Generate index vector for games 6 to 10+?
+    } else if (6..=10).contains(&game_number) {
+        entry_size = 94;
+        filename_size = 33;
+        for e in 0..number_entries {
+            let index = 0x820 + (entry_size * e as usize);
+            let entry = &mut data[index..(index + entry_size)];
+            entries_info.push(Entry {
+                filename: String::from(
+                    std::str::from_utf8(&entry[0..filename_size])
+                        .unwrap()
+                        .trim_matches('\0'),
+                ),
+                entry_num: byte_read::read_bytes_le(&entry, 0x21, 2) as u16,
+                img_origin_x: byte_read::read_bytes_le(&entry, 0x31, 2) as u16,
+                img_origin_y: byte_read::read_bytes_le(&entry, 0x35, 2) as u16,
+                img_width: byte_read::read_bytes_le(&entry, 0x49, 2) as u16,
+                img_height: byte_read::read_bytes_le(&entry, 0x4D, 2) as u16,
+                data_offset: byte_read::read_bytes_le(&entry, 0x23, 4) as u32,
+                file_size_decoded: byte_read::read_bytes_le(&entry, 0x51, 4) as u32,
+                file_size_encoded: byte_read::read_bytes_le(&entry, 0x59, 4) as u32,
+                file_type: byte_read::read_bytes_le(&entry, 0x5D, 1) as u8,
+                ..Default::default()
+            });
+        }
     }
+
+    //Check for a file called CIFLIST, this contains a log of all the files with their proper extension
+    //If their is no CIFLIST, then the files can still be sorted as image or data by their index
+    let mut ciflist_exists = false;
+    for f in 0..number_entries as usize {
+        if entries_info[f].filename == "CIFLIST" {
+            let slice = &mut data[(entries_info[f as usize].data_offset as usize)
+                ..entries_info[f as usize].data_offset as usize
+                    + entries_info[f as usize].file_size_encoded as usize];
+            for n in 0..slice.len() {
+                //'unencrypt' the data
+                slice[n] = (Wrapping(slice[n] as u8) - Wrapping((n % 256) as u8)).0;
+            }
+            let file = &mut lzss::decode_lzss(slice)[..];
+            extensions = gen_exts(file, number_entries as usize);
+            ciflist_exists = true;
+            break;
+        }
+    }
+    if !ciflist_exists {eprintln!("Ciftree does not contain a CIFLIST.txt, falling back on index file identifier")}
 
     for f in 0..number_entries as usize {
         //decode the data for the entry
@@ -112,50 +217,80 @@ pub fn ext_ciftree(input_file: std::path::PathBuf, output_dir: std::path::PathBu
             slice[n] = (Wrapping(slice[n] as u8) - Wrapping((n % 256) as u8)).0;
         }
         let file = &mut lzss::decode_lzss(slice)[..];
-        assert_eq!(
-            file.len(),
-            entries_info[f].file_size_decoded as usize,
-            "decrypted ciftree file size does not match file size stated by its index"
-        );
-        if f == 0 {
-            extensions = gen_exts(file, number_entries as usize);
-        }
-
-        if extensions[&entries_info[f].filename] == "TGA" {
-            if gen_png {
-                let out =
-                    PathBuf::from(&output_dir).join(format!("{}.png", entries_info[f].filename));
-                let mut stuff = rgb::gen_rgb_array(file);
-                expng::encode_png(
-                    &mut stuff,
-                    out,
-                    entries_info[f].img_width,
-                    entries_info[f].img_height,
-                );
+        if ciflist_exists {
+            if extensions[&entries_info[f].filename] == "TGA" {
+                if gen_png {
+                    //Write all images as png format, instead of the original TGA format
+                    let out = PathBuf::from(&output_dir)
+                        .join(format!("{}.png", entries_info[f].filename));
+                    let mut stuff = rgb::gen_rgb_array(file);
+                    expng::encode_png(
+                        &mut stuff,
+                        out,
+                        entries_info[f].img_width,
+                        entries_info[f].img_height,
+                    );
+                } else {
+                    let mut out = std::fs::File::create(PathBuf::from(&output_dir).join(format!(
+                        "{}.{}",
+                        entries_info[f].filename, extensions[&entries_info[f].filename]
+                    )))
+                    .unwrap();
+                    let tga = gen_tga(
+                        file,
+                        entries_info[f].img_width,
+                        entries_info[f].img_height,
+                        entries_info[f].img_origin_x,
+                        entries_info[f].img_origin_y,
+                    );
+                    out.write_all(tga.as_slice()).unwrap();
+                }
+                continue;
             } else {
                 let mut out = std::fs::File::create(PathBuf::from(&output_dir).join(format!(
                     "{}.{}",
                     entries_info[f].filename, extensions[&entries_info[f].filename]
                 )))
                 .unwrap();
-                let tga = gen_tga(
-                    file,
-                    entries_info[f].img_width,
-                    entries_info[f].img_height,
-                    entries_info[f].img_origin_x,
-                    entries_info[f].img_origin_y,
-                );
-                out.write_all(tga.as_slice()).unwrap();
+                out.write_all(file).unwrap();
             }
-
-            continue;
         } else {
-            let mut out = std::fs::File::create(PathBuf::from(&output_dir).join(format!(
-                "{}.{}",
-                entries_info[f].filename, extensions[&entries_info[f].filename]
-            )))
-            .unwrap();
-            out.write_all(file).unwrap();
+            //We must guess the file type based on the header
+            if entries_info[f].file_type == 0x02 {
+                if gen_png {
+                    let out = PathBuf::from(&output_dir)
+                        .join(format!("{}.png", entries_info[f].filename));
+                    let mut stuff = rgb::gen_rgb_array(file);
+                    expng::encode_png(
+                        &mut stuff,
+                        out,
+                        entries_info[f].img_width,
+                        entries_info[f].img_height,
+                    );
+                } else {
+                    let mut out = std::fs::File::create(
+                        PathBuf::from(&output_dir)
+                            .join(format!("{}.tga", entries_info[f].filename)),
+                    )
+                    .unwrap();
+                    let tga = gen_tga(
+                        file,
+                        entries_info[f].img_width,
+                        entries_info[f].img_height,
+                        entries_info[f].img_origin_x,
+                        entries_info[f].img_origin_y,
+                    );
+                    out.write_all(tga.as_slice()).unwrap();
+                }
+
+                continue;
+            } else {
+                let mut out = std::fs::File::create(
+                    PathBuf::from(&output_dir).join(format!("{}.txt", entries_info[f].filename)),
+                )
+                .unwrap();
+                out.write_all(file).unwrap();
+            }
         }
     }
 }
@@ -206,23 +341,23 @@ fn gen_exts(file: &[u8], size: usize) -> HashMap<String, String> {
 
 fn gen_tga(file: &[u8], width: u16, height: u16, ox: u16, oy: u16) -> Vec<u8> {
     let mut a: Vec<u8> = vec![
-        0x00,   //Number of characters in ID field
-        0x00,   //Color Map type (NONE)
-        0x02,   //Image Type Code (Unmapped RGB)
-        0x00,   //5 bytes of color map spec, ignored if color map type is none
+        0x00, //Number of characters in ID field
+        0x00, //Color Map type (NONE)
+        0x02, //Image Type Code (Unmapped RGB)
+        0x00, //5 bytes of color map spec, ignored if color map type is none
         0x00,
         0x00,
         0x00,
         0x00,
         (ox & 0x00FF) as u8, //The x origin of the image
         ((ox & 0xFF00) >> 8) as u8,
-        (oy & 0x00FF) as u8,    //The y origin of the image
+        (oy & 0x00FF) as u8, //The y origin of the image
         ((oy & 0xFF00) >> 8) as u8,
-        (width & 0x00FF) as u8,     //The width of the image
+        (width & 0x00FF) as u8, //The width of the image
         ((width & 0xFF00) >> 8) as u8,
-        (height & 0x00FF) as u8,    //The Height of the image
+        (height & 0x00FF) as u8, //The Height of the image
         ((height & 0xFF00) >> 8) as u8,
-        0x10,   //The image is 16 bit pixel depth
+        0x10, //The image is 16 bit pixel depth
         0x20, //origin is in upper left hand corner
     ];
     a.extend_from_slice(file);

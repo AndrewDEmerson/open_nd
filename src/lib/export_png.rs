@@ -7,16 +7,18 @@ pub fn encode_png(pixels: &mut Vec<u8>, write: PathBuf, width: u16, height: u16)
         pixels.push(0x0);
     }
 
-    println!("Writing file: {}", write.display());
+    //println!("Writing file: {}", write.display());
     let w = std::io::BufWriter::new(std::fs::File::create(std::path::Path::new(&write)).unwrap());
     let mut encoder = png::Encoder::new(w, width as u32, height as u32);
     encoder.set_color(png::ColorType::RGB);
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header().unwrap();
-    writer.write_image_data(&pixels).unwrap();
+    writer.write_image_data(&pixels).unwrap_or_else(|error| {
+        println!("{} on file {:?}", error, write);
+    });
 }
 
-pub fn decode_png(input_file: std::path::PathBuf) -> (u16, u16, Vec<u8>){
+pub fn decode_png(input_file: std::path::PathBuf) -> (u16, u16, Vec<u8>) {
     // The decoder is a build for reader and can be used to set various decoding options
     // via `Transformations`. The default output transformation is `Transformations::EXPAND
     // | Transformations::STRIP_ALPHA`.

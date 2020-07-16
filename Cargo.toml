@@ -24,6 +24,14 @@ path = "src/his.rs"
 name = "avf_encoder"
 path = "src/avf_encoder.rs"
 
+[[bin]]
+name = "his_encoder"
+path = "src/his_encoder.rs"
+
+[[bin]]
+name = "extractor"
+path = "src/extractor.rs"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
