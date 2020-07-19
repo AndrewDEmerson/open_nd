@@ -3,19 +3,23 @@ use std::num::Wrapping;
 
 #[path = "lib/byte_reader.rs"]
 mod byte_read;
-#[path = "lib/lzss_encode.rs"]
+#[path = "lib/lzss.rs"]
 mod lzss;
-#[path = "lib/rgb.rs"]
-mod rgb;
-#[path = "lib/export_png.rs"]
-mod xpng;
+#[path = "lib/image.rs"]
+mod image;
 use structopt::StructOpt;
 
 #[derive(StructOpt)]
+#[structopt(name = "AVF Encoder")]
+/// Convert png(s) into an an AVF file
 struct Cli {
-    // The path to the file to read
+    /// Path to input png or directory of pngs
+    ///
+    /// If a png is specified then the AVF file will inherite the name stem of the file.
+    /// If a directory is specified then the pngs in the directory must be named "directoryname_#.png" starting at index 0;
+    /// The AVF file will inherite the directory name.
     input_file: std::path::PathBuf,
-    // The path to the write directory
+    /// Path to a directory where output is saved
     output_dir: std::path::PathBuf,
 }
 
@@ -51,8 +55,8 @@ pub fn png_to_avf(input_file: std::path::PathBuf, output_dir: std::path::PathBuf
 
     let mut frames: Vec<Frame> = Vec::new();
     for i in 0..frame_paths.len() {
-        let (frame_width, frame_height, rgb_arr) = xpng::decode_png(frame_paths[i].clone());
-        let mut pixels: Vec<u8> = rgb::gen_rgb5_array(&rgb_arr[..]);
+        let (frame_width, frame_height, rgb_arr) = image::decode_png(frame_paths[i].clone());
+        let mut pixels: Vec<u8> = image::gen_rgb5_array(&rgb_arr[..]);
         let encoded_frame = &mut lzss::encode_lzss(&mut pixels[..]);
         for n in 0..encoded_frame.len() {
             // Encrypt the data

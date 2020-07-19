@@ -2,19 +2,19 @@ use std::io::Read;
 use std::num::Wrapping;
 #[path = "lib/byte_reader.rs"]
 mod byte_read;
+#[path = "lib/image.rs"]
+mod image;
 #[path = "lib/lzss.rs"]
 mod lzss;
-#[path = "lib/rgb.rs"]
-mod rgb;
-#[path = "lib/export_png.rs"]
-mod xpng;
 use structopt::StructOpt;
 
 #[derive(StructOpt)]
+#[structopt(name = "AVF Decoder")]
+/// Converts an .avf file into a png or pngs
 struct Cli {
-    // The path to the file to read
+    /// Path to an AVF file to be converted
     input_file: std::path::PathBuf,
-    // The path to the write directory
+    /// Path to a directory where output is saved
     output_dir: std::path::PathBuf,
 }
 
@@ -23,10 +23,9 @@ fn main() {
     avf_to_png(args.input_file, args.output_dir);
 }
 
-
-pub fn avf_to_png(input_file: std::path::PathBuf, mut output_dir: std::path::PathBuf){
+pub fn avf_to_png(input_file: std::path::PathBuf, mut output_dir: std::path::PathBuf) {
     println!();
-    println!("{:?}",input_file);
+    println!("{:?}", input_file);
     let mut file = std::fs::File::open(&input_file).unwrap();
     let mut data = Vec::new();
     file.read_to_end(&mut data).unwrap();
@@ -41,7 +40,8 @@ pub fn avf_to_png(input_file: std::path::PathBuf, mut output_dir: std::path::Pat
      */
 
     //STFD has AVF files that are not actually images
-    if data.len() <= 15 || String::from(std::str::from_utf8(&data[0..0x0F]).unwrap()) != "AVF WayneSikes\0"
+    if data.len() <= 15
+        || String::from(std::str::from_utf8(&data[0..0x0F]).unwrap()) != "AVF WayneSikes\0"
     {
         eprintln!("Incorrect Header for file {:?}", input_file);
         return;
@@ -80,9 +80,8 @@ pub fn avf_to_png(input_file: std::path::PathBuf, mut output_dir: std::path::Pat
             frame_type: byte_read::read_bytes_le(&data, hr + 0x0E, 1) as u8,
             tail_data: byte_read::read_bytes_le(&data, hr + 0x0F, 4) as u32,
         });
-        if frames_info.last().unwrap().frame_type != 0{
+        if frames_info.last().unwrap().frame_type != 0 {
             println!("Compression seemes to be used on frame {}", n);
-            //println!("{:?}", &data[hr+0x0A..hr+0x13]);
         }
         hr += 19; //increase our refrence address to the start of the next frame index
     }
@@ -98,24 +97,39 @@ pub fn avf_to_png(input_file: std::path::PathBuf, mut output_dir: std::path::Pat
             ..frames_info[f as usize].frame_offset as usize
                 + frames_info[f as usize].frame_size as usize];
         for n in 0..slice.len() {
-            //'unencrypt' the data
+            // Unencrypt the data
             slice[n] = (Wrapping(slice[n] as u8) - Wrapping((n % 256) as u8)).0;
         }
         let s = &mut lzss::decode_lzss(slice)[..];
-        if s.len() == 0{
-            eprintln!("Frame from file {:?} contains zero data, Cannot write frame", input_file);
+        if s.len() == 0 {
+            eprintln!(
+                "Frame from file {:?} contains zero data, Cannot write frame",
+                input_file
+            );
             continue;
         }
-        let mut s = rgb::gen_rgb_array(s);
-        let path_o = std::path::PathBuf::from(&output_dir).join(format!(
-            "{}_{}.png",
-            std::path::Path::new(&input_file)
-                .file_stem()
-                .unwrap()
-                .to_str()
-                .unwrap(),
-            f
-        ));
-        xpng::encode_png(&mut s, path_o, frame_width, frame_height);
+        let mut s = image::gen_rgb_array(s);
+        let path_o;
+        if number_frames > 1 {
+            path_o = std::path::PathBuf::from(&output_dir).join(format!(
+                "{}_{}.png",
+                std::path::Path::new(&input_file)
+                    .file_stem()
+                    .unwrap()
+                    .to_str()
+                    .unwrap(),
+                f
+            ));
+        } else {
+            path_o = std::path::PathBuf::from(&output_dir).join(format!(
+                "{}.png",
+                std::path::Path::new(&input_file)
+                    .file_stem()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+            ));
+        }
+        image::encode_png(&mut s, path_o, frame_width, frame_height);
     }
 }
