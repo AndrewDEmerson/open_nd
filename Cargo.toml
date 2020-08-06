@@ -24,9 +24,14 @@ path = "src/his.rs"
 name = "extractor"
 path = "src/extractor.rs"
 
+[[bin]]
+name = "gui"
+path = "src/gui.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 structopt = "0.3.13"
 png = "0.16.3"
+minifb = "0.17.0"
+rodio = "0.11.0"
