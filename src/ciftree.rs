@@ -8,19 +8,21 @@ mod byte_read;
 #[path = "lib/lzss.rs"]
 mod lzss;
 use structopt::StructOpt;
-#[path = "lib/export_png.rs"]
-mod expng;
-#[path = "lib/rgb.rs"]
-mod rgb;
+#[path = "lib/image.rs"]
+mod image;
 
 #[derive(StructOpt)]
+#[structopt(name = "CIFTREE Decoder")]
+/// Extracts all the files out of a ciftree
 struct Cli {
-    // The path to the file to read
+    /// Path to the input CIFTREE file
     input_file: std::path::PathBuf,
-    // The path to the write directory
+    /// Path to a directory where output is saved
     output_dir: std::path::PathBuf,
-    #[structopt(short, long, parse(from_occurrences))]
-    png_files: u8,
+    /// Save TGA images as PNGs instead
+    #[structopt(short, long)]
+    png_files: bool,
+    /// Number of the game in release order
     #[structopt(short, long)]
     game_number: u8,
 }
@@ -31,7 +33,7 @@ fn main() {
         args.input_file,
         args.output_dir,
         args.game_number,
-        args.png_files >= 1,
+        args.png_files,
     );
 }
 
@@ -223,8 +225,8 @@ pub fn ext_ciftree(
                     //Write all images as png format, instead of the original TGA format
                     let out = PathBuf::from(&output_dir)
                         .join(format!("{}.png", entries_info[f].filename));
-                    let mut stuff = rgb::gen_rgb_array(file);
-                    expng::encode_png(
+                    let mut stuff = image::gen_rgb_array(file);
+                    image::encode_png(
                         &mut stuff,
                         out,
                         entries_info[f].img_width,
@@ -260,8 +262,8 @@ pub fn ext_ciftree(
                 if gen_png {
                     let out = PathBuf::from(&output_dir)
                         .join(format!("{}.png", entries_info[f].filename));
-                    let mut stuff = rgb::gen_rgb_array(file);
-                    expng::encode_png(
+                    let mut stuff = image::gen_rgb_array(file);
+                    image::encode_png(
                         &mut stuff,
                         out,
                         entries_info[f].img_width,

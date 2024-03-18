@@ -1,7 +1,7 @@
 [package]
 name = "open_nd"
 version = "0.1.0"
-authors = ["Andrew E <32277829+AndrewDEmerson@users.noreply.github.com>"]
+authors = ["Andrew E"]
 edition = "2018"
 
 [[bin]]
@@ -19,6 +19,14 @@ path = "src/scene.rs"
 [[bin]]
 name = "his_decoder"
 path = "src/his.rs"
+
+[[bin]]
+name = "avf_encoder"
+path = "src/avf_encoder.rs"
+
+[[bin]]
+name = "his_encoder"
+path = "src/his_encoder.rs"
 
 [[bin]]
 name = "extractor"

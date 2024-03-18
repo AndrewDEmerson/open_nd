@@ -6,22 +6,22 @@ mod byte_read;
 use structopt::StructOpt;
 
 #[derive(StructOpt)]
+#[structopt(name = "HIS Decoder")]
+/// Convert His files into wav or ogg files
 struct Cli {
-    // The path to the file to read
+    /// Path to an AVF file to be converted
     input_file: std::path::PathBuf,
-    // The path to the write directory
+    /// Path to a directory where output is saved
     output_dir: std::path::PathBuf,
-    //The bit depth of the resulting wav file
+    /// The bit depth of the resulting wav file
+    /// 
+    /// 8 for unsigned 8 bit; 16 for signed 16 bit; this is ignored if the HIS is based on an OGG.
     #[structopt(short, long, default_value = "8")]
     bit_depth: u8,
 }
 
 fn main() {
     let args = Cli::from_args();
-
-    let mut file = std::fs::File::open(&args.input_file).unwrap();
-    let mut data = Vec::new();
-    file.read_to_end(&mut data).unwrap();
     his_to_wav(args.input_file, args.output_dir, args.bit_depth);
 }
 
